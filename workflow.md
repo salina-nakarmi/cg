@@ -3,12 +3,16 @@ setting up a canvas and learning how to manipulate individual pixels. This is ke
 
 ## What is the Mandelbrot Set?
 It's based on a simple formula that you repeat over and over:
-<code> z = z² + c </code>
+<code>
+z = z² + c
+</code>
 Where z and c are complex numbers.
 
 Complex Numbers - Quick Crash Course
 A complex number has two parts:
+</code>
 c = a + bi
+</code>
 
 a = real part (think: x-axis)
 b = imaginary part (think: y-axis)
