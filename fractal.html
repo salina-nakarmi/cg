@@ -59,46 +59,66 @@
         const HEIGHT = canvas.height; // 600 pixels
         
         // Step 3: Test that canvas works - draw a simple gradient
-        function testCanvas() {
-            // Create image data - array of pixels
-            const imageData = ctx.createImageData(WIDTH, HEIGHT);
-            const pixels = imageData.data; // This is a flat array: [R,G,B,A, R,G,B,A, ...]
+        function drawMandelbrot() {
+    const imageData = ctx.createImageData(WIDTH, HEIGHT);
+    const pixels = imageData.data;
+    
+    const maxIterations = 100;  // How many times we test each point
+    
+    // Map canvas coordinates to complex plane
+    // Standard view: real axis from -2.5 to 1, imaginary from -1 to 1
+    const xMin = -2.5;
+    const xMax = 1.0;
+    const yMin = -1.0;
+    const yMax = 1.0;
+    
+    for (let py = 0; py < HEIGHT; py++) {
+        for (let px = 0; px < WIDTH; px++) {
+            // Convert pixel to complex number
+            const x0 = xMin + (px / WIDTH) * (xMax - xMin);
+            const y0 = yMin + (py / HEIGHT) * (yMax - yMin);
             
-            const centerX = WIDTH / 2;
-            const centerY = HEIGHT / 2;
-            // Loop through each pixel
-            for (let y = 0; y < HEIGHT; y++) {
-                for (let x = 0; x < WIDTH; x++) {
-                    // Calculate position in the flat array
-                    // Each pixel has 4 values (R, G, B, A)
-                    const index = (y * WIDTH + x) * 4;
-                    
-                    
-
-                    const dx = x - centerX;
-                    const dy = y - centerY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
-                    
-                    // Color based on distance (white center, black edges)
-                    const brightness = 255 * (1 - distance / maxDistance);
-                    
-                    pixels[index + 0] = brightness;
-                    pixels[index + 1] = brightness;
-                    pixels[index + 2] = brightness;
-                    pixels[index + 3] = 255;
-                    
-                    
-                }
+            // Mandelbrot iteration: z = z² + c
+            let x = 0;
+            let y = 0;
+            let iteration = 0;
+            
+            // Keep iterating while |z| < 2 and we haven't hit max
+            while (x*x + y*y <= 4 && iteration < maxIterations) {
+                // Complex multiplication: (x + yi)² = (x² - y²) + (2xy)i
+                const xTemp = x*x - y*y + x0;
+                y = 2*x*y + y0;
+                x = xTemp;
+                iteration++;
             }
             
-            // Draw the pixels to canvas
-            ctx.putImageData(imageData, 0, 0);
-            info.textContent = 'Radial gradient created!';
+            // Color based on how quickly it escaped
+            const index = (py * WIDTH + px) * 4;
+            
+            if (iteration === maxIterations) {
+                // In the set - black
+                pixels[index + 0] = 0;
+                pixels[index + 1] = 0;
+                pixels[index + 2] = 0;
+            } else {
+                // Escaped - color based on iteration count
+                const color = (iteration / maxIterations) * 255;
+                pixels[index + 0] = color;
+                pixels[index + 1] = color;
+                pixels[index + 2] = color * 0.5;  // Less blue for variation
+            }
+            pixels[index + 3] = 255;
         }
-        
-        // Run the test
-        testCanvas();
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    info.textContent = 'Mandelbrot Set rendered!';
+}
+
+// Call it instead of testCanvas()
+drawMandelbrot();
+            
+
         
         // ===== YOUR TASK =====
         // 1. Save this file as fractal.html
