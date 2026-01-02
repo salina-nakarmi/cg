@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        #container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        #canvas {
+            border: 2px solid #444;
+            display: block;
+            margin: 0 auto;
+            cursor: crosshair;
+            background: #000;
+        }
+        
+        #info {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Fractal Explorer</h1>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div id="info">Loading...</div>
+    </div>
+
+    <script>
+        // ===== DAY 1: BASIC SETUP =====
+        
+        // Step 1: Get the canvas element and its drawing context
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const info = document.getElementById('info');
+        
+        // Step 2: Canvas dimensions
+        const WIDTH = canvas.width;   // 800 pixels
+        const HEIGHT = canvas.height; // 600 pixels
+        
+        // Step 3: Test that canvas works - draw a simple gradient
+        function testCanvas() {
+            // Create image data - array of pixels
+            const imageData = ctx.createImageData(WIDTH, HEIGHT);
+            const pixels = imageData.data; // This is a flat array: [R,G,B,A, R,G,B,A, ...]
+            
+            const centerX = WIDTH / 2;
+            const centerY = HEIGHT / 2;
+            // Loop through each pixel
+            for (let y = 0; y < HEIGHT; y++) {
+                for (let x = 0; x < WIDTH; x++) {
+                    // Calculate position in the flat array
+                    // Each pixel has 4 values (R, G, B, A)
+                    const index = (y * WIDTH + x) * 4;
+                    
+                    
+
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+                    
+                    // Color based on distance (white center, black edges)
+                    const brightness = 255 * (1 - distance / maxDistance);
+                    
+                    pixels[index + 0] = brightness;
+                    pixels[index + 1] = brightness;
+                    pixels[index + 2] = brightness;
+                    pixels[index + 3] = 255;
+                    
+                    
+                }
+            }
+            
+            // Draw the pixels to canvas
+            ctx.putImageData(imageData, 0, 0);
+            info.textContent = 'Radial gradient created!';
+        }
+        
+        // Run the test
+        testCanvas();
+        
+        // ===== YOUR TASK =====
+        // 1. Save this file as fractal.html
+        // 2. Open it in a browser (Chrome/Firefox)
+        // 3. You should see a red-blue gradient
+        // 4. Reply back: "Day 1 complete - I see the gradient"
+        
+        // ===== UNDERSTANDING CHECK =====
+        // Can you answer these?
+        // Q1: Why do we multiply by 4 when calculating index?
+        // Q2: What does pixels[index + 3] = 255 do?
+        // Q3: What would happen if you set pixels[index + 1] = 255?
+    </script>
+</body>
+</html>
