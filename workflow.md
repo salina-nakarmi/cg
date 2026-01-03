@@ -54,7 +54,16 @@ Interactive 3D visualizer demonstrating rotation of objects about an arbitrary a
 
 ---
 
-## The Hearn & Baker 5-Step Method
+## Absolute line rotation
+
+# Resources from book 
+[ Donald Hearn, M. Pauline Baker] Computer Graphics( Book Fi.org)
+![1](./refrence/1.png)
+![2](./refrence/2.png)
+![3](./refrence/3.png)
+![4](./refrence/4.png)
+![5](./refrence/5.png)
+
 
 **Problem:** Rotate a point P about an arbitrary axis defined by two points P1 and P2.
 
