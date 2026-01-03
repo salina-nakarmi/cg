@@ -54,8 +54,9 @@ Interactive 3D visualizer demonstrating rotation of objects about an arbitrary a
 
 ---
 
-## Absolute line rotation
+## rotation about an arbitary line
 
+### refrences
 # Resources from book 
 [ Donald Hearn, M. Pauline Baker] Computer Graphics( Book Fi.org)
 ![1](./refrence/1.png)
@@ -63,7 +64,6 @@ Interactive 3D visualizer demonstrating rotation of objects about an arbitrary a
 ![3](./refrence/3.png)
 ![4](./refrence/4.png)
 ![5](./refrence/5.png)
-
 
 **Problem:** Rotate a point P about an arbitrary axis defined by two points P1 and P2.
 
@@ -305,7 +305,36 @@ M_total = M_inverse @ M_rotate @ M_forward
 
 ### **Week 3: Enhancement & Polish (Days 15-21)**
 
-#### **Day 15-16: Interactive Axis Definition**
+#### **Day 15: Orthogonal View System**
+**Goal:** Show coordinate system from different axis perspectives
+
+**Concept:** Educational feature to understand projections and rotations
+- **YZ Plane View** - Look down X-axis (see what's "coming out of screen")
+- **XZ Plane View** - Look down Y-axis (top-down view)
+- **XY Plane View** - Look down Z-axis (front view)
+- **3D Perspective** - Standard oblique view
+
+**Implementation:**
+- Key bindings: 1=YZ view, 2=XZ view, 3=XY view, 4=3D view
+- Snap camera to orthogonal positions
+- Show which plane is "facing" the viewer
+- Highlight the viewing axis (e.g., when in YZ view, X-axis points at viewer)
+
+**Why this matters for viva:**
+- Demonstrates understanding of 2D projections from 3D
+- Shows how textbook diagrams (like Figure 11-14) work
+- Clarifies "looking down an axis" terminology
+- Helps visualize why certain components become zero during rotations
+
+**Deliverables:**
+- 4 view modes working
+- Smooth camera transitions
+- Clear visual indicators for current view
+- Axis labels adjust for viewing angle
+
+---
+
+#### **Day 16: Interactive Axis Definition**
 **Goal:** Let user define custom axis
 
 **Implementation:**
@@ -321,7 +350,38 @@ M_total = M_inverse @ M_rotate @ M_forward
 
 ---
 
-#### **Day 17: Multiple Objects**
+#### **Day 17: Coordinate System Rotation Feature**
+**Goal:** Rotate the coordinate system itself (not just camera view)
+
+**Concept:** Educational feature showing how the entire coordinate frame can be transformed
+- Demonstrate that rotation axis stays fixed while coordinates rotate around it
+- Show transformation from world coordinates to local coordinates
+- Visualize how "bringing axis to Z" actually works
+
+**Implementation:**
+- Toggle mode: "Rotate Object" vs "Rotate Coordinates"
+- When rotating coordinates:
+  - XYZ axes themselves rotate around the arbitrary axis
+  - Object appears to counter-rotate (relative motion)
+  - Shows equivalence of two viewpoints
+- Visual indicators showing which mode is active
+
+**Why this is powerful:**
+- Clarifies the difference between:
+  - Object rotation (object moves, axes fixed)
+  - Coordinate transformation (axes move, object fixed in space)
+- Demonstrates principle of relative motion
+- Shows why we can "align axis with Z" conceptually
+
+**Deliverables:**
+- Toggle between rotation modes
+- Coordinate axes visibly rotate
+- Clear labels for active mode
+- Smooth transition between modes
+
+---
+
+#### **Day 18: Multiple Objects**
 **Goal:** Add variety of objects to rotate
 
 **Implementation:**
@@ -351,7 +411,7 @@ tetrahedron_vertices = [
 
 ---
 
-#### **Day 18: UI & Controls Polish**
+#### **Day 19: UI & Controls Polish**
 **Goal:** Professional interface
 
 **Implementation:**
@@ -360,16 +420,19 @@ tetrahedron_vertices = [
 - Buttons for common operations
 - Color-coded legends
 - Status display
+- View mode indicator (YZ/XZ/XY/3D)
 
 **UI Elements:**
 - Step progress indicator
 - Angle displays (α, β, θ)
 - Camera info (pitch, yaw, zoom)
+- Current view mode (which axis perspective)
+- Rotation mode indicator (Object/Coordinates)
 - Legend for colors
 
 ---
 
-#### **Day 19: Matrix Display (Educational)**
+#### **Day 20: Matrix Display (Educational)**
 **Goal:** Show actual transformation matrices
 
 **Implementation:**
@@ -396,7 +459,7 @@ Current Matrix (Step 3):
 
 ---
 
-#### **Day 20: Comparison View**
+#### **Day 21: Comparison View & Final Polish**
 **Goal:** Show before/after simultaneously
 
 **Implementation:**
@@ -411,23 +474,24 @@ Current Matrix (Step 3):
 
 ---
 
-#### **Day 21: Documentation & Final Polish**
-**Goal:** Code cleanup and viva preparation
-
-**Tasks:**
+**Final Polish Tasks:**
 - Comment every function thoroughly
 - Write README with usage instructions
 - Create concept explanation document
-- Test all features
+- Test all features thoroughly
 - Fix any remaining bugs
 - Optimize performance if needed
+- Verify all view modes work correctly
+- Test coordinate rotation feature
 
 **Documentation Sections:**
 1. How to run the program
-2. Controls reference
+2. Controls reference (including view modes)
 3. Mathematical concepts explained
-4. Code structure overview
-5. Known limitations
+4. Understanding orthogonal views
+5. Object vs coordinate rotation
+6. Code structure overview
+7. Known limitations
 
 ---
 
@@ -535,6 +599,13 @@ Different results! Order matters.
 - C: Toggle axis point selection mode
 - M: Toggle matrix display
 
+### **Coordinate System Controls**
+- 1: YZ plane view (look down X-axis)
+- 2: XZ plane view (look down Y-axis)  
+- 3: XY plane view (look down Z-axis)
+- 4: 3D perspective view (oblique)
+- T: Toggle rotation mode (Object/Coordinates)
+
 ### **Default Parameters**
 - Camera distance: 10 units
 - Initial pitch: 30°
@@ -617,8 +688,15 @@ Different results! Order matters.
 #    - draw_step_indicator()                  # Progress display
 #    - draw_angle_arc()                       # Visual angle
 #    - draw_matrix_overlay()                  # Matrix display
+#    - draw_view_indicator()                  # Current view mode
+#    - set_orthogonal_view(view_type)         # YZ/XZ/XY/3D views
 
-# 8. MAIN LOOP
+# 8. EDUCATIONAL FEATURES
+#    - toggle_rotation_mode()                 # Object vs Coordinate rotation
+#    - rotate_coordinate_system()             # Rotate axes themselves
+#    - show_projection_to_plane()             # Show YZ/XZ projections
+
+# 9. MAIN LOOP
 #    - Event handling (keyboard, mouse)
 #    - State updates
 #    - Rendering pipeline
@@ -764,7 +842,11 @@ u × v = (uy×vz - uz×vy,
 - [ ] Angles displayed correctly
 
 ### **Week 3 Completion:**
-- [ ] Click-to-define axis working
+- [ ] Orthogonal view system (YZ/XZ/XY/3D)
+- [ ] Smooth view transitions
+- [ ] View mode indicators clear
+- [ ] Interactive axis definition working
+- [ ] Coordinate rotation mode functional
 - [ ] Multiple objects selectable
 - [ ] UI professional and clear
 - [ ] Matrix display functional
@@ -799,12 +881,16 @@ u × v = (uy×vz - uz×vy,
 - Explain how you calculate the α angle
 - What happens in Step 5? Why is it needed?
 - How do you handle the camera rotation?
+- Explain the difference between YZ view and rotating camera to see YZ plane
+- How does coordinate rotation differ from object rotation?
 
 **Demonstration:**
 - Show me rotation about the Z-axis only
 - Change the axis to be horizontal - what changes?
 - What happens when P1 and P2 are very close?
 - Can you rotate multiple objects simultaneously?
+- Switch to YZ plane view and explain what we're seeing
+- Show the coordinate rotation mode - what's happening here?
 
 **Troubleshooting:**
 - What was the hardest bug you encountered?
@@ -815,13 +901,16 @@ u × v = (uy×vz - uz×vy,
 
 ## Extension Ideas (If You Finish Early)
 
-1. **Rodriguez's Formula** - Implement direct arbitrary axis rotation
-2. **Quaternion Rotation** - Alternative to Euler angles
-3. **Animation Recording** - Save rotation as video/GIF
-4. **Mesh Import** - Load OBJ files to rotate complex models
-5. **Lighting** - Add simple diffuse lighting to objects
-6. **Multiple Axes** - Rotate about 2 different axes simultaneously
+1. **Multiple simultaneous axes** - Rotate about 2 different axes
+2. **Rodriguez's Formula** - Implement direct arbitrary axis rotation for comparison
+3. **Quaternion Rotation** - Alternative to Euler angles (advanced)
+4. **Animation Recording** - Save rotation as video/GIF
+5. **Mesh Import** - Load OBJ files to rotate complex models
+6. **Lighting** - Add simple diffuse lighting to objects
 7. **Interpolation** - Smooth transition between orientations (slerp)
+8. **Split-screen views** - Show YZ, XZ, XY, and 3D views simultaneously
+9. **Projection lines** - Draw lines from object to each plane showing projections
+10. **Vector field visualization** - Show how multiple points rotate simultaneously
 
 ---
 
@@ -844,13 +933,14 @@ u × v = (uy×vz - uz×vy,
 
 ## Success Criteria
 
-**Minimum Viable Project (Must Have):**
+**Minimum Viable Product (Must Have):**
 - ✅ 3D coordinate system with rotatable camera
 - ✅ Arbitrary axis defined by two points
 - ✅ Complete 5-step transformation working
 - ✅ At least one object rotating correctly
 - ✅ Step-through visualization
 - ✅ Clear controls and UI
+- ✅ Basic orthogonal views (YZ/XZ/XY)
 
 **Good Project (Should Have):**
 - ✅ All of above plus:
@@ -858,14 +948,17 @@ u × v = (uy×vz - uz×vy,
 - ✅ Angle visualizations (arcs)
 - ✅ Multiple objects
 - ✅ Professional UI
+- ✅ Orthogonal view system working
 - ✅ Comprehensive documentation
 
 **Excellent Project (Could Have):**
 - ✅ All of above plus:
 - ✅ Interactive axis definition
 - ✅ Matrix display overlay
+- ✅ Coordinate rotation mode
 - ✅ Comparison views
 - ✅ Polished animations
+- ✅ Split-screen or multi-view option
 - ✅ No bugs, smooth experience
 
 ---
@@ -895,12 +988,12 @@ u × v = (uy×vz - uz×vy,
 - [ ] Day 14: Step controls
 
 ### **Week 3 (Days 15-21):**
-- [ ] Day 15: Interactive axis
-- [ ] Day 16: Axis interaction polish
-- [ ] Day 17: Multiple objects
-- [ ] Day 18: UI enhancement
-- [ ] Day 19: Matrix display
-- [ ] Day 20: Comparison view
+- [ ] Day 15: Orthogonal view system
+- [ ] Day 16: Interactive axis definition
+- [ ] Day 17: Coordinate rotation mode
+- [ ] Day 18: Multiple objects
+- [ ] Day 19: UI enhancement
+- [ ] Day 20: Matrix display
 - [ ] Day 21: Final polish & documentation
 
 ---
