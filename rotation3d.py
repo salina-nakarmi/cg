@@ -233,7 +233,7 @@ def draw_axes():
     
     # Draw axes as thick lines
     draw_line_3d(origin, (axis_length, 0, 0), RED, 4)      # X-axis (RIGHT)
-    draw_line_3d(origin, (0, axis_length, 0), GREEN, 4)    # Y-axis (UP)
+    draw_line_3d(origin, (0, -axis_length, 0), GREEN, 4)    # Y-axis (UP)
     draw_line_3d(origin, (0, 0, axis_length), BLUE, 4)     # Z-axis (OUTWARD)
     
     # Add labels at the end of each axis
@@ -245,7 +245,7 @@ def draw_axes():
     screen.blit(text, (p[0], p[1]))
     
     # Y label
-    p = project_3d((0, axis_length + 0.5, 0))
+    p = project_3d((0, -(axis_length + 0.5), 0))
     text = font.render('Y', True, GREEN)
     screen.blit(text, (p[0], p[1]))
     
@@ -319,8 +319,8 @@ def draw_ui():
     control_y += 35
     
     controls = [
-        "W/S: Pitch (rotate up/down)",
-        "A/D: Yaw (rotate left/right)",
+        "K/J: Pitch (rotate up/down)",
+        "H/L: Yaw (rotate left/right)",
         "Q/E: Zoom in/out",
         "1/2/3/4: Switch view (YZ/XZ/XY/3D)",
         "R: Reset camera",
@@ -333,56 +333,57 @@ def draw_ui():
         control_y += 25
     
     # Legend
-    legend_x = WIDTH - 300
-    legend_y = 10
+    # legend_x = WIDTH - 300
+    # legend_y = 10
     
-    pygame.draw.rect(screen, (20, 20, 20), (legend_x - 10, legend_y - 10, 290, 180), border_radius=5)
-    pygame.draw.rect(screen, (80, 80, 80), (legend_x - 10, legend_y - 10, 290, 180), 2, border_radius=5)
+    # pygame.draw.rect(screen, (20, 20, 20), (legend_x - 10, legend_y - 10, 290, 180), border_radius=5)
+    # pygame.draw.rect(screen, (80, 80, 80), (legend_x - 10, legend_y - 10, 290, 180), 2, border_radius=5)
     
-    legend_title = font_control.render("Legend:", True, WHITE)
-    screen.blit(legend_title, (legend_x, legend_y))
-    legend_y += 35
+    # legend_title = font_control.render("Legend:", True, WHITE)
+    # screen.blit(legend_title, (legend_x, legend_y))
+    # legend_y += 35
     
-    legend_items = [
-        ("Red: X-axis (RIGHT)", RED),
-        ("Green: Y-axis (UP)", GREEN),
-        ("Blue: Z-axis (OUTWARD)", BLUE),
-        ("Yellow: Rotation axis", YELLOW),
-        ("Orange: Axis points (P₁, P₂)", ORANGE),
-    ]
+    # legend_items = [
+    #     ("Red: X-axis (RIGHT)", RED),
+    #     ("Green: Y-axis (UP)", GREEN),
+    #     ("Blue: Z-axis (OUTWARD)", BLUE),
+    #     ("Yellow: Rotation axis", YELLOW),
+    #     ("Orange: Axis points (P₁, P₂)", ORANGE),
+    # ]
     
-    for label, color in legend_items:
-        text = font.render(label, True, color)
-        screen.blit(text, (legend_x, legend_y))
-        legend_y += 25
+    # for label, color in legend_items:
+    #     text = font.render(label, True, color)
+    #     screen.blit(text, (legend_x, legend_y))
+    #     legend_y += 25
 
 # ========================================
 # MAIN LOOP
 # ========================================
 
 # Define arbitrary axis points
-P1 = (1, 0.5, 0.5)
-P2 = (3, 2, 2.5)
+P1 = (1, -0.5, 1.5)
+P2 = (3, -2, -2.5)
 
 running = True
 while running:
+   
     # Event handling
     keys = pygame.key.get_pressed()
     
     # Camera controls (only in 3D view)
     if current_view == VIEW_3D:
-        if keys[pygame.K_w]:
+        if keys[pygame.K_k]:
             rotation_x += 2
-        if keys[pygame.K_s]:
+        if keys[pygame.K_j]:
             rotation_x -= 2
-        if keys[pygame.K_a]:
+        if keys[pygame.K_h]:
             rotation_y -= 2
-        if keys[pygame.K_d]:
+        if keys[pygame.K_l]:
             rotation_y += 2
     
     # Zoom (works in all views)
     if keys[pygame.K_q]:
-        scale = min(200, scale + 3)
+        scale = min(250, scale + 3)
     if keys[pygame.K_e]:
         scale = max(30, scale - 3)
     
