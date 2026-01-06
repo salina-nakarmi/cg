@@ -26,9 +26,9 @@ PURPLE = (147, 112, 219)
 
 # Camera parameters
 camera_distance = 10
-rotation_x = 30  # Pitch (up/down)
-rotation_y = -45  # Yaw (left/right) - CHANGED to negative for proper initial view
-scale = 80       # Zoom level
+rotation_x = 162  # Pitch (up/down)
+rotation_y = -25  # Yaw (left/right) - CHANGED to negative for proper initial view
+scale = 250       # Zoom level
 
 # View modes
 VIEW_3D = 0
@@ -43,8 +43,8 @@ def set_view_mode(mode):
     current_view = mode
     
     if mode == VIEW_3D:
-        rotation_x = 30
-        rotation_y = -45  # CHANGED: negative to get proper default view
+        rotation_x = 162
+        rotation_y = -25  # CHANGED: negative to get proper default view
     elif mode == VIEW_YZ:  # Look down X-axis
         rotation_x = 0
         rotation_y = -90  # CHANGED: negative
@@ -383,9 +383,9 @@ while running:
     
     # Zoom (works in all views)
     if keys[pygame.K_q]:
-        scale = min(250, scale + 3)
+        scale = min(350, scale + 3)
     if keys[pygame.K_e]:
-        scale = max(30, scale - 3)
+        scale = max(150, scale - 3)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -395,9 +395,9 @@ while running:
                 running = False
             elif event.key == pygame.K_r:
                 # Reset camera
-                rotation_x = 30
-                rotation_y = -45  # CHANGED to match initial view
-                scale = 80
+                rotation_x = 162
+                rotation_y = -25  # CHANGED to match initial view
+                scale = 250
                 current_view = VIEW_3D
             elif event.key == pygame.K_1:
                 set_view_mode(VIEW_YZ)
