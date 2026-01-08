@@ -320,6 +320,90 @@ def rotation_x_matrix(angle):
 
 # Transfromation Steps:
 
+def step_0_original(point, p1, p2):
+    """Original point (no transformation)"""
+    return point, p1, p2, None
+
+def step_1_translate(point, p1, p2):
+    """Translate so that P1 is at origin"""
+    tx, ty, tz = -p1[0], -p1[1], -p1[2]
+    T = translation_matrix(tx, ty, tz)
+    new_point = apply_transformation(point, T)
+    new_p1 = (0,0,0)
+    new_p2 = apply_transformation(p2, T)
+    return new_point, new_p1, new_p2, {'T': (tx, ty, tz)}
+
+def step_2_rotate_z(point, p1, p2):
+    """Rotate around Z-axis to align P2 with XZ plane"""
+    #  First apply step 1
+    point, p1, p2, _ = step_1_translate(point, p1, p2)
+
+    #Calculate alpha
+    a, b, c = normalize_vector(p2)
+    d = math.sqrt(a*a + b*b) #cause viewed from z axis in the XY plane
+
+    if d > 1e-10:
+        cos_alpha = a / d
+        sin_alpha = b / d
+        alpha = math.atan2(sin_alpha, cos_alpha)
+    else:
+        alpha = 0
+    
+    #Apply Rz(-alpha)
+    Rz = rotation_z_matrix(-alpha)
+    new_point = apply_transformation(point, Rz)
+    new_p2 = apply_transformation(p2, Rz)
+
+    return new_point, P1, new_p2, {'alpha': alpha, 'd': d, 'a': a, 'b': b, 'c': c}
+
+
+def step_3_rotate_y(point, p1, p2):
+    """Step 3: Rotate about Y-axis to align with X-axis"""
+    # Apply steps 1 and 2
+    point, p1, p2, info = step_2_rotate_z(point, p1, p2)
+    alpha, d, a, b, c = info['alpha'], info['d'], info['a'], info['b'], info['c']
+    
+    # Calculate beta
+    cos_beta = d
+    sin_beta = a
+    beta = math.atan2(sin_beta, cos_beta)
+    
+    # Apply Ry(-beta)
+    Ry = rotation_y_matrix(-beta)
+    new_point = apply_transformation(point, Ry)
+    new_p2 = apply_transformation(p2, Ry)
+    
+    return new_point, p1, new_p2, {'alpha': alpha, 'beta': beta, 'd': d, 'a': a, 'b': b, 'c': c}
+
+def step_4_rotate_x(point, p1, p2, theta):
+    """Step 4: Rotate about X-axis by angle theta"""
+    #Apply step 1,2,3
+    point, p1, p2, info = step_3_rotate_y(point, p1, p2)
+
+    # Apply Rx(theta)
+    Rx = rotation_x_matrix(theta)
+    new_point = apply_transformation(point, Rx)
+
+    return new_point, p1, p2, info
+
+def step_5_inverse(point, p1_orig, p2_orig, theta):
+    """Step 5: Apply inverse transformations"""
+    # Get to step 4
+    point, _, _, info = step_4_rotate_x(point, p1_orig, p2_orig, theta)
+    alpha, beta = info['alpha'], info['beta']
+    
+    # Apply inverse: Ry(beta), Rx(alpha), Translate back
+    Ry_inv = rotation_y_matrix(beta)
+    Rz_inv = rotation_z_matrix(alpha)
+    T_inv = translation_matrix(p1_orig[0], p1_orig[1], p1_orig[2])
+    
+    new_point = apply_transformation(point, Ry_inv)
+    new_point = apply_transformation(new_point, Rz_inv)
+    new_point = apply_transformation(new_point, T_inv)
+    
+    return new_point, p1_orig, p2_orig, {'alpha': alpha, 'beta': beta}
+
+
 def draw_arbitrary_axis(p1, p2):
     """
     Draw the arbitrary rotation axis
