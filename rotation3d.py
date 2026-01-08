@@ -26,8 +26,8 @@ PURPLE = (147, 112, 219)
 
 # Camera parameters
 camera_distance = 10
-rotation_x = 162  # Pitch (up/down)
-rotation_y = -25  # Yaw (left/right) - CHANGED to negative for proper initial view
+rotation_x = 350  # Pitch (up/down)
+rotation_y = -241  # Yaw (left/right) - CHANGED to negative for proper initial view
 scale = 250       # Zoom level
 
 # View modes
@@ -43,11 +43,11 @@ def set_view_mode(mode):
     current_view = mode
     
     if mode == VIEW_3D:
-        rotation_x = 162
-        rotation_y = -25  # CHANGED: negative to get proper default view
+        rotation_x = 350
+        rotation_y = -241  # CHANGED: negative to get proper default view
     elif mode == VIEW_YZ:  # Look down X-axis
         rotation_x = 0
-        rotation_y = -90  # CHANGED: negative
+        rotation_y = 90  # CHANGED: negative
     elif mode == VIEW_XZ:  # Look down Y-axis
         rotation_x = 90
         rotation_y = 0
@@ -233,7 +233,7 @@ def draw_axes():
     
     # Draw axes as thick lines
     draw_line_3d(origin, (axis_length, 0, 0), RED, 4)      # X-axis (RIGHT)
-    draw_line_3d(origin, (0, -axis_length, 0), GREEN, 4)    # Y-axis (UP)
+    draw_line_3d(origin, (0, axis_length, 0), GREEN, 4)    # Y-axis (UP)
     draw_line_3d(origin, (0, 0, axis_length), BLUE, 4)     # Z-axis (OUTWARD)
     
     # Add labels at the end of each axis
@@ -245,7 +245,7 @@ def draw_axes():
     screen.blit(text, (p[0], p[1]))
     
     # Y label
-    p = project_3d((0, -(axis_length + 0.5), 0))
+    p = project_3d((0, (axis_length + 0.5), 0))
     text = font.render('Y', True, GREEN)
     screen.blit(text, (p[0], p[1]))
     
@@ -361,8 +361,8 @@ def draw_ui():
 # ========================================
 
 # Define arbitrary axis points
-P1 = (1, -0.5, 1.5)
-P2 = (3, -2, -2.5)
+P1 = (-1, 0.5, 1.5)
+P2 = (-3, 2, 2.5)
 
 running = True
 while running:
@@ -395,8 +395,8 @@ while running:
                 running = False
             elif event.key == pygame.K_r:
                 # Reset camera
-                rotation_x = 162
-                rotation_y = -25  # CHANGED to match initial view
+                rotation_x = 350
+                rotation_y = -241  # CHANGED to match initial view
                 scale = 250
                 current_view = VIEW_3D
             elif event.key == pygame.K_1:
