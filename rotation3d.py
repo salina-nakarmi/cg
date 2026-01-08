@@ -260,6 +260,66 @@ def draw_axes():
     text = font.render('Z', True, BLUE)
     screen.blit(text, (p[0], p[1]))
 
+# ------------------------------------------------------------------------
+def normalize_vector(v):
+    """Normalize a vector to unit length"""
+    norm = math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
+    if norm < 1e-10:
+        return (1,0,0) # Default to X-axis if zero vector
+    return (v[0]/norm, v[1]/norm, v[2]/norm)
+
+def apply_transformation(point, matrix):
+    """Apply a 4x4 transformation matrix to a  point"""
+    p = np.array([point[0], point[1], point[2], 1])
+    result = matrix @ p #Series of matirx multiplication
+    return (result[0], result[1], result[2])
+
+def translation_matrix(tx, ty, tz):
+    """Create translation matrix"""
+    return np.array([
+        [1, 0, 0, tx],
+        [0, 1, 0, ty],
+        [0, 0, 1, tz],
+        [0, 0, 0, 1]
+    ], dtype=float)
+
+def rotation_z_matrix(anlge):
+    """Create rotation matrix around Z-axis"""
+    c = math.cos(anlge)
+    s = math.sin(anlge)
+    return np.array([
+        [c, -s, 0, 0],
+        [s, c, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ], dtype=float)
+
+def rotation_y_matrix(angle):
+    """Create rotation matrix around Y-axis"""
+    c = math.cos(angle)
+    s = math.sin(angle)
+    return np.array([
+        [c, 0, s, 0],
+        [0, 1, 0, 0],
+        [-s, 0, c, 0],
+        [0, 0, 0, 1]
+    ], dtype=float)
+
+def rotation_x_matrix(angle):
+    """Create rotation matrix around Z-axis"""
+    c = math.cos(angle)
+    s = math.sin(angle)
+    return np.array([
+        [1, 0, 0, 0],
+        [0, c, -s, 0],
+        [0, s, c, 0],
+        [0, 0, 0, 1]
+    ], dtype=float)
+
+# ---------------------------------------------------------------------------
+
+# Transfromation Steps:
+
 def draw_arbitrary_axis(p1, p2):
     """
     Draw the arbitrary rotation axis
@@ -425,7 +485,7 @@ while running:
     
     draw_coordinate_planes()
     draw_axes()
-    
+
     draw_arbitrary_axis(P1, P2)
     
     # Draw UI
