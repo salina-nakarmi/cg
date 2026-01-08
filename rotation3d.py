@@ -37,6 +37,16 @@ VIEW_XZ = 2  # Looking down Y-axis
 VIEW_XY = 3  # Looking down Z-axis
 current_view = VIEW_3D
 
+# Transformation steps
+STEP_0_ORIGINAL = 0
+STEP_1_TRANSLATE = 1
+STEP_2_ROTATE_Z = 2
+STEP_3_ROTATE_Y = 3
+STEP_4_ROTATE_X = 4
+STEP_5_INVERSE = 5
+current_step = 0
+
+
 def set_view_mode(mode):
     """Set camera to specific view mode"""
     global rotation_x, rotation_y, current_view
@@ -135,11 +145,7 @@ def draw_point_3d(point, color, size=6, label=""):
         font = pygame.font.Font(None, 28)
         text = font.render(label, True, color)
         screen.blit(text, (p[0] + 12, p[1] - 12))
-
-def draw_grid():
-    """Draw grid on XZ plane (ground) - DISABLED"""
-    # Grid removed as per user request
-    pass
+    
 
 def draw_plane_3d(corners, color, alpha=60):
     """
@@ -393,6 +399,10 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
+            elif event.key == pygame.K_RIGHT:
+                current_step = min(5, current_step + 1)
+            elif event.key == pygame.K_LEFT:
+                current_step = max(0, current_step - 1)
             elif event.key == pygame.K_r:
                 # Reset camera
                 rotation_x = 350
@@ -412,9 +422,10 @@ while running:
     screen.fill(BLACK)
     
     # Draw scene
-    draw_grid()
+    
     draw_coordinate_planes()
     draw_axes()
+    
     draw_arbitrary_axis(P1, P2)
     
     # Draw UI
