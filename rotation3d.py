@@ -23,6 +23,7 @@ DARK_GRAY = (50, 50, 50)
 ORANGE = (255, 165, 0)
 LIGHT_BLUE = (173, 216, 230)
 PURPLE = (147, 112, 219)
+PINK = (255, 192, 203)
 
 # Camera parameters
 camera_distance = 10
@@ -46,6 +47,11 @@ STEP_4_ROTATE_X = 4
 STEP_5_INVERSE = 5
 current_step = 0
 
+# Animation
+theta = 0  # Current rotation angle
+paused = True
+show_angles = True
+show_vector = True #toggle for showing positional vectors
 
 def set_view_mode(mode):
     """Set camera to specific view mode"""
@@ -66,20 +72,7 @@ def set_view_mode(mode):
         rotation_y = 180  # CHANGED: 180 to look from front
 
 def rotate_point(point, rot_x, rot_y):
-    """
-    Rotate a 3D point based on camera angles
-    
-    This simulates camera rotation by rotating the world in opposite direction
-    - rot_x: pitch (rotation around X-axis)
-    - rot_y: yaw (rotation around Y-axis)
-    
-    RIGHT-HANDED coordinate system:
-    - X-axis points RIGHT
-    - Y-axis points UP
-    - Z-axis points OUTWARD (toward viewer)
-    
-    Returns: (x, y, z) after rotation
-    """
+    """Rotate a 3D point based on camera angles"""
     x, y, z = point
     
     # Convert degrees to radians
@@ -135,6 +128,47 @@ def draw_line_3d(start, end, color, width=2):
     p1 = project_3d(start)
     p2 = project_3d(end)
     pygame.draw.line(screen, color, (p1[0], p1[1]), (p2[0], p2[1]), width)
+
+# *** ADDED: New function for drawing arrows ***
+def draw_arrow_3d(start, end, color, width=3):
+    """Draw an arrow (line with arrowhead) from start to end point"""
+    # Draw the main line
+    draw_line_3d(start, end, color, width)
+    
+    # Calculate direction vector
+    direction = np.array(end) - np.array(start)
+    length = np.linalg.norm(direction)
+    
+    if length < 0.001:
+        return
+    
+    direction = direction / length
+    
+    # Create arrowhead
+    arrow_size = 0.3
+    
+    # Find perpendicular vectors
+    if abs(direction[0]) < 0.9:
+        perp1 = np.cross(direction, [1, 0, 0])
+    else:
+        perp1 = np.cross(direction, [0, 1, 0])
+    perp1 = perp1 / np.linalg.norm(perp1)
+    perp2 = np.cross(direction, perp1)
+    
+    # Arrowhead base
+    arrow_base = np.array(end) - direction * arrow_size
+    
+    # Arrowhead points
+    arrow_p1 = arrow_base + perp1 * arrow_size * 0.5
+    arrow_p2 = arrow_base - perp1 * arrow_size * 0.5
+    arrow_p3 = arrow_base + perp2 * arrow_size * 0.5
+    arrow_p4 = arrow_base - perp2 * arrow_size * 0.5
+    
+    # Draw arrowhead
+    draw_line_3d(end, tuple(arrow_p1), color, max(1, width-1))
+    draw_line_3d(end, tuple(arrow_p2), color, max(1, width-1))
+    draw_line_3d(end, tuple(arrow_p3), color, max(1, width-1))
+    draw_line_3d(end, tuple(arrow_p4), color, max(1, width-1))
 
 def draw_point_3d(point, color, size=6, label=""):
     """Draw a 3D point with optional label"""
@@ -261,6 +295,35 @@ def draw_axes():
     screen.blit(text, (p[0], p[1]))
 
 # ------------------------------------------------------------------------
+def draw_arc_3d(center, radius, start_angle, end_angle, normal, color, width=3, segments=20):
+    """Draw an arc in 3D space to visualize angles"""
+    normal = np.array(normal)
+    norm = np.linalg.norm(normal)
+    if norm < 0.001:
+        return
+    normal = normal / norm
+    
+    # Find perpendicular vectors
+    if abs(normal[0]) < 0.9:
+        perp1 = np.cross(normal, [1, 0, 0])
+    else:
+        perp1 = np.cross(normal, [0, 1, 0])
+    perp1 = perp1 / np.linalg.norm(perp1)
+    perp2 = np.cross(normal, perp1)
+    
+    points = []
+    for i in range(segments + 1):
+        angle = start_angle + (end_angle - start_angle) * i / segments
+        x = center[0] + radius * (math.cos(angle) * perp1[0] + math.sin(angle) * perp2[0])
+        y = center[1] + radius * (math.cos(angle) * perp1[1] + math.sin(angle) * perp2[1])
+        z = center[2] + radius * (math.cos(angle) * perp1[2] + math.sin(angle) * perp2[2])
+        points.append((x, y, z))
+    
+    for i in range(len(points) - 1):
+        draw_line_3d(points[i], points[i+1], color, width)
+
+# ---------------------------------------------------------------------------
+
 def normalize_vector(v):
     """Normalize a vector to unit length"""
     norm = math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
@@ -283,10 +346,10 @@ def translation_matrix(tx, ty, tz):
         [0, 0, 0, 1]
     ], dtype=float)
 
-def rotation_z_matrix(anlge):
+def rotation_z_matrix(angle):
     """Create rotation matrix around Z-axis"""
-    c = math.cos(anlge)
-    s = math.sin(anlge)
+    c = math.cos(angle)
+    s = math.sin(angle)
     return np.array([
         [c, -s, 0, 0],
         [s, c, 0, 0],
@@ -365,7 +428,7 @@ def step_3_rotate_y(point, p1, p2):
     
     # Calculate beta
     cos_beta = d
-    sin_beta = a
+    sin_beta = c
     beta = math.atan2(sin_beta, cos_beta)
     
     # Apply Ry(-beta)
@@ -403,6 +466,9 @@ def step_5_inverse(point, p1_orig, p2_orig, theta):
     
     return new_point, p1_orig, p2_orig, {'alpha': alpha, 'beta': beta}
 
+#-----------------------------------------------------------------------------------------------------------
+
+
 
 def draw_arbitrary_axis(p1, p2):
     """
@@ -433,78 +499,158 @@ def draw_arbitrary_axis(p1, p2):
     draw_point_3d(p1, ORANGE, 10, "P1")
     draw_point_3d(p2, ORANGE, 10, "P2")
 
-def draw_ui():
-    """Draw user interface panel with instructions and info"""
-    panel_x = 10
-    panel_y = 10
+def draw_cube(center, size, color):
+    """Draw a cube at given center"""
+    half = size / 2
+    vertices = [
+        (center[0]-half, center[1]-half, center[2]-half),
+        (center[0]+half, center[1]-half, center[2]-half),
+        (center[0]+half, center[1]+half, center[2]-half),
+        (center[0]-half, center[1]+half, center[2]-half),
+        (center[0]-half, center[1]-half, center[2]+half),
+        (center[0]+half, center[1]-half, center[2]+half),
+        (center[0]+half, center[1]+half, center[2]+half),
+        (center[0]-half, center[1]+half, center[2]+half)
+    ]
     
-    # Title
+    edges = [
+        (0,1), (1,2), (2,3), (3,0),
+        (4,5), (5,6), (6,7), (7,4),
+        (0,4), (1,5), (2,6), (3,7)
+    ]
+    
+    for edge in edges:
+        draw_line_3d(vertices[edge[0]], vertices[edge[1]], color, 3)
+    
+    for vertex in vertices:
+        draw_point_3d(vertex, color, 4)
+
+def draw_step_info():
+    """Draw information panel for current step"""
+    panel_x =10
+    panel_y = 10
+
     font_title = pygame.font.Font(None, 32)
-    title = font_title.render("3D Arbitrary Axis Rotation Visualizer", True, WHITE)
+    font = pygame.font.Font(None, 24)
+
+    #Title
+    title = font_title.render("Transformation Step Info", True, WHITE)
     screen.blit(title, (panel_x, panel_y))
     panel_y += 40
+
+    # Currwnt step
+    step_names = [
+        "Step 0 : Original - Initial Configuration",
+        "Step 1 : Translation - Move P1 to Origin",
+        "Step 2 : Rotate Z - Align P2 with XZ Plane (α)", 
+        "Step 3 : Rotate Y - Align P2 with X-axis (β)",
+        "Step 4 : Rotate X - Apply Rotation around X-axis (θ)",
+        "Step 5 : Inverse - Return to Original Position with inverse transmormation"
+    ]
+
+    step_text = font_title.render(step_names[current_step], True, LIGHT_BLUE)
+    screen.blit(step_text, (panel_x, panel_y))
+    panel_y += 40
+
+    #Step-specific info
+    if current_step == STEP_0_ORIGINAL:
+        lines = [
+            f"Rotation axis from P1 to P2",
+            f"P1 = ({P1[0]:.2f}, {P1[1]:.2f}, {P1[2]:.2f})",
+            f"P2 = ({P2[0]:.2f}, {P2[1]:.2f}, {P2[2]:.2f})",
+            f"Test point P = ({test_point[0]:.2f}, {test_point[1]:.2f}, {test_point[2]:.2f})",
+            "",
+            "This axis is NOT parallel to any coordinate axis!"
+        ]
+    elif current_step == STEP_1_TRANSLATE:
+        _, _, _, info = step_1_translate(test_point, P1, P2)
+        lines = [
+            f"Translation vector: T = {info['T'][0]:.2f}",
+            f"New P1 = (0, 0, 0)",
+            "",
+            "Why? Rotations are simpler when axis",
+            "passes through the origin."
+        ]
+    elif current_step == STEP_2_ROTATE_Z:
+        _, _, _, info = step_2_rotate_z(test_point, P1, P2)
+        alpha_deg = math.degrees(info['alpha'])
+        lines = [
+            f"Axis unit vector: ({info['a']:.3f}, {info['b']:.3f}, {info['c']:.3f})",
+            f"d = √(a² +b²) = {info['d']:.3f}",
+            f"α = arctan(b/a) = {alpha_deg:.1f}°",
+            "",
+            "Rotate about Z-axis by -α",
+            "Result: Axis now in XZ plane (y = 0)"
+        ]
+    elif current_step == STEP_3_ROTATE_Y:
+        _, _, _, info = step_3_rotate_y(test_point, P1, P2)
+        beta_deg = math.degrees(info['beta'])
+        lines = [
+            f"β = arctan(c/d) = {beta_deg:.1f}°",
+            f"cos(β) = d = {info['d']:.3f}",
+            f"sin(β) = c = {info['a']:.3f}",
+            "",
+            "Rotate about Y-axis by -β",
+            "Result: Axis aligned with X-axis"
+        ]
+    elif current_step == STEP_4_ROTATE_X:
+        theta_deg = math.degrees(theta)
+        lines = [
+            f"Rotate angle: θ = {theta_deg:.1f}°",
+            "",
+            "Rotate about X-axis by θ",
+            "This is our DESIRED rotation!",
+            "",
+            "Point rotates in YZ plane around X-axis"
+        ]
+    else:
+        _, _, _, info = step_5_inverse(test_point, P1, P2, theta)
+        lines = [
+            "Apply inverse transformations:",
+            f"1. Ry(+β) where β = {math.degrees(info['beta']):.1f}°",
+            f"2. Rz(+α) where α = {math.degrees(info['alpha']):.1f}°",
+            f"3. Translate by +({P1[0]:.2f}, {P1[1]:.2f}, {P1[2]:.2f})",
+            "",
+            "Final: Point rotated about arbitrary axis!"
+        ]
+
+    for line in lines:
+        text = font.render(line, True, WHITE)
+        screen.blit(text, (panel_x, panel_y))
+        panel_y += 25
+
+
+def draw_controls():
+    """Draw control panel"""
+    panel_x = 10
+    panel_y = HEIGHT - 270
     
-    # View mode
+    pygame.draw.rect(screen, (20, 20, 20), (panel_x - 5, panel_y - 5, 400, 245), border_radius=5)
+    pygame.draw.rect(screen, (80, 80, 80), (panel_x - 5, panel_y - 5, 400, 245), 2, border_radius=5)
+    
+    font_title = pygame.font.Font(None, 28)
     font = pygame.font.Font(None, 24)
-    view_names = ["3D Perspective", "YZ Plane (X-axis view)", "XZ Plane (Y-axis view)", "XY Plane (Z-axis view)"]
-    view_text = font.render(f"View: {view_names[current_view]}", True, LIGHT_BLUE)
-    screen.blit(view_text, (panel_x, panel_y))
-    panel_y += 30
     
-    # Camera info
-    info_text = font.render(f"Camera: Pitch={rotation_x:.0f}° Yaw={rotation_y:.0f}° Zoom={scale}", True, GRAY)
-    screen.blit(info_text, (panel_x, panel_y))
-    panel_y += 30
-    
-    # Controls section
-    control_y = HEIGHT - 200
-    
-    # Background box
-    pygame.draw.rect(screen, (20, 20, 20), (panel_x - 5, control_y - 5, 500, 190), border_radius=5)
-    pygame.draw.rect(screen, (80, 80, 80), (panel_x - 5, control_y - 5, 500, 190), 2, border_radius=5)
-    
-    font_control = pygame.font.Font(None, 28)
-    controls_title = font_control.render("Controls:", True, YELLOW)
-    screen.blit(controls_title, (panel_x, control_y))
-    control_y += 35
+    title = font_title.render("Controls:", True, YELLOW)
+    screen.blit(title, (panel_x, panel_y))
+    panel_y += 35
     
     controls = [
-        "K/J: Pitch (rotate up/down)",
-        "H/L: Yaw (rotate left/right)",
+        "SPACE: Play/Pause rotation",
+        "← →: Previous/Next step",
+        "K/J: Pitch camera (up/down)",
+        "H/L: Yaw camera (left/right)",
         "Q/E: Zoom in/out",
-        "1/2/3/4: Switch view (YZ/XZ/XY/3D)",
+        "1/2/3/4: View YZ/XZ/XY/3D",
         "R: Reset camera",
-        "ESC: Quit"
+        "A: Toggle angle display"
+        "V: Toggle position vector" 
     ]
     
     for control in controls:
         text = font.render(control, True, WHITE)
-        screen.blit(text, (panel_x, control_y))
-        control_y += 25
-    
-    # Legend
-    # legend_x = WIDTH - 300
-    # legend_y = 10
-    
-    # pygame.draw.rect(screen, (20, 20, 20), (legend_x - 10, legend_y - 10, 290, 180), border_radius=5)
-    # pygame.draw.rect(screen, (80, 80, 80), (legend_x - 10, legend_y - 10, 290, 180), 2, border_radius=5)
-    
-    # legend_title = font_control.render("Legend:", True, WHITE)
-    # screen.blit(legend_title, (legend_x, legend_y))
-    # legend_y += 35
-    
-    # legend_items = [
-    #     ("Red: X-axis (RIGHT)", RED),
-    #     ("Green: Y-axis (UP)", GREEN),
-    #     ("Blue: Z-axis (OUTWARD)", BLUE),
-    #     ("Yellow: Rotation axis", YELLOW),
-    #     ("Orange: Axis points (P₁, P₂)", ORANGE),
-    # ]
-    
-    # for label, color in legend_items:
-    #     text = font.render(label, True, color)
-    #     screen.blit(text, (legend_x, legend_y))
-    #     legend_y += 25
+        screen.blit(text, (panel_x, panel_y))
+        panel_y += 25
 
 # ========================================
 # MAIN LOOP
@@ -513,6 +659,9 @@ def draw_ui():
 # Define arbitrary axis points
 P1 = (-1, 0.5, 1.5)
 P2 = (-3, 2, 2.5)
+
+# Test point to rotate
+test_point = (-2.5, 1.5, 0.5)
 
 running = True
 while running:
@@ -543,6 +692,8 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
+            elif event.key == pygame.K_SPACE:  # *** ADDED: Space to play/pause ***
+                paused = not paused
             elif event.key == pygame.K_RIGHT:
                 current_step = min(5, current_step + 1)
             elif event.key == pygame.K_LEFT:
@@ -562,18 +713,57 @@ while running:
             elif event.key == pygame.K_4:
                 set_view_mode(VIEW_3D)
     
+    # Update animation
+# *** FIXED: Changed comparison from function to constant ***
+    if not paused and current_step >= STEP_4_ROTATE_X:
+        theta += 0.02
+        if theta > 2 * math.pi:
+            theta = 0
+
     # Clear screen
     screen.fill(BLACK)
     
     # Draw scene
-    
     draw_coordinate_planes()
     draw_axes()
 
+    # apply current transformation
+    if current_step == STEP_0_ORIGINAL:
+        display_point, display_p1, display_p2, info = step_0_original(test_point, P1, P2)
+    elif current_step == STEP_1_TRANSLATE:
+        display_point, display_p1, display_p2, info = step_1_translate(test_point, P1, P2)
+    elif current_step == STEP_2_ROTATE_Z:
+        display_point, display_p1, display_p2, info = step_2_rotate_z(test_point, P1, P2)
+    elif current_step == STEP_3_ROTATE_Y:
+        display_point, display_p1, display_p2, info = step_3_rotate_y(test_point, P1, P2)
+    elif current_step == STEP_4_ROTATE_X:
+        display_point, display_p1, display_p2, info = step_4_rotate_x(test_point, P1, P2, theta)
+    else:
+        display_point, display_p1, display_p2, info = step_5_inverse(test_point, P1, P2, theta)
+
+    # Draw rotation axis
     draw_arbitrary_axis(P1, P2)
     
+    # Draw angle arcs
+    if show_angles and info:
+        if current_step == STEP_2_ROTATE_Z:
+            alpha = info['alpha']
+            if abs(alpha) > 0.01:
+                draw_arc_3d((0, 0, 0), 1.5, 0, alpha, (0, 0, 1), PURPLE, 3, 15)
+        elif current_step == STEP_3_ROTATE_Y:
+            beta = info['beta']
+            if abs(beta) > 0.01:
+                draw_arc_3d((0, 0, 0), 1.5, 0, beta, (0, 1, 0), PURPLE, 3, 15)
+        elif current_step >= STEP_4_ROTATE_X and theta > 0:
+            draw_arc_3d((0, 0, 0), 1.8, 0, theta, (1, 0, 0), MAGENTA, 3, 20)
+
+    # Draw cube at point
+    draw_cube(display_point, 0.4, CYAN)
+    draw_point_3d(display_point, MAGENTA, 8, "P")
+
     # Draw UI
-    draw_ui()
+    draw_step_info()
+    draw_controls()
     
     # Update display
     pygame.display.flip()
