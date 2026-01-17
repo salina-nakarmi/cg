@@ -369,7 +369,7 @@ def rotation_y_matrix(angle):
     ], dtype=float)
 
 def rotation_x_matrix(angle):
-    """Create rotation matrix around Z-axis"""
+    """Create rotation matrix around X-axis"""
     c = math.cos(angle)
     s = math.sin(angle)
     return np.array([
@@ -392,7 +392,7 @@ def step_1_translate(point, p1, p2):
     tx, ty, tz = -p1[0], -p1[1], -p1[2]
     T = translation_matrix(tx, ty, tz)
     new_point = apply_transformation(point, T)
-    new_p1 = (0,0,0)
+    new_p1 = apply_transformation(p1, T)
     new_p2 = apply_transformation(p2, T)
     return new_point, new_p1, new_p2, {'T': (tx, ty, tz)}
 
@@ -415,9 +415,12 @@ def step_2_rotate_z(point, p1, p2):
     #Apply Rz(-alpha)
     Rz = rotation_z_matrix(-alpha)
     new_point = apply_transformation(point, Rz)
+    new_p1 = apply_transformation(p1, Rz)
     new_p2 = apply_transformation(p2, Rz)
 
-    return new_point, P1, new_p2, {'alpha': alpha, 'd': d, 'a': a, 'b': b, 'c': c}
+    return new_point, new_p1, new_p2, {
+        'alpha': alpha, 'd': d, 'a': a, 'b': b, 'c': c
+        }
 
 
 def step_3_rotate_y(point, p1, p2):
@@ -430,13 +433,15 @@ def step_3_rotate_y(point, p1, p2):
     cos_beta = d
     sin_beta = c
     beta = math.atan2(sin_beta, cos_beta)
+    info['beta'] = beta
     
     # Apply Ry(-beta)
     Ry = rotation_y_matrix(-beta)
     new_point = apply_transformation(point, Ry)
+    new_p1 = apply_transformation(p1, Ry)
     new_p2 = apply_transformation(p2, Ry)
     
-    return new_point, p1, new_p2, {'alpha': alpha, 'beta': beta, 'd': d, 'a': a, 'b': b, 'c': c}
+    return new_point, new_p1, new_p2, info
 
 def step_4_rotate_x(point, p1, p2, theta):
     """Step 4: Rotate about X-axis by angle theta"""
@@ -446,25 +451,38 @@ def step_4_rotate_x(point, p1, p2, theta):
     # Apply Rx(theta)
     Rx = rotation_x_matrix(theta)
     new_point = apply_transformation(point, Rx)
+    new_p1 = apply_transformation(p1, Rx)
+    new_p2 = apply_transformation(p2, Rx)
 
-    return new_point, p1, p2, info
+    return new_point, new_p1, new_p2, info
 
 def step_5_inverse(point, p1_orig, p2_orig, theta):
     """Step 5: Apply inverse transformations"""
     # Get to step 4
-    point, _, _, info = step_4_rotate_x(point, p1_orig, p2_orig, theta)
+    point, p1, p2, info = step_4_rotate_x(point, p1_orig, p2_orig, theta)
     alpha, beta = info['alpha'], info['beta']
     
-    # Apply inverse: Ry(beta), Rx(alpha), Translate back
+    # Apply inverse: Ry(beta), Rz(alpha), Translate back
     Ry_inv = rotation_y_matrix(beta)
     Rz_inv = rotation_z_matrix(alpha)
     T_inv = translation_matrix(p1_orig[0], p1_orig[1], p1_orig[2])
     
+    # === INVERSE Y ===
     new_point = apply_transformation(point, Ry_inv)
+    new_p1 = apply_transformation(p1, Ry_inv)
+    new_p2 = apply_transformation(p2, Ry_inv)
+
+    # === INVERSE Z ===
     new_point = apply_transformation(new_point, Rz_inv)
+    new_p1 = apply_transformation(new_p1, Rz_inv)
+    new_p2 = apply_transformation(new_p2, Rz_inv)
+
+    # === INVERSE TRANSLATION ===
     new_point = apply_transformation(new_point, T_inv)
-    
-    return new_point, p1_orig, p2_orig, {'alpha': alpha, 'beta': beta}
+    new_p1 = apply_transformation(new_p1, T_inv)
+    new_p2 = apply_transformation(new_p2, T_inv)
+
+    return new_point, new_p1, new_p2, info
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -588,7 +606,7 @@ def draw_step_info():
         lines = [
             f"β = arctan(c/d) = {beta_deg:.1f}°",
             f"cos(β) = d = {info['d']:.3f}",
-            f"sin(β) = c = {info['a']:.3f}",
+            f"sin(β) = c = {info['c']:.3f}",
             "",
             "Rotate about Y-axis by -β",
             "Result: Axis aligned with X-axis"
@@ -643,7 +661,7 @@ def draw_controls():
         "Q/E: Zoom in/out",
         "1/2/3/4: View YZ/XZ/XY/3D",
         "R: Reset camera",
-        "A: Toggle angle display"
+        "A: Toggle angle display",
         "V: Toggle position vector" 
     ]
     
@@ -712,6 +730,11 @@ while running:
                 set_view_mode(VIEW_XY)
             elif event.key == pygame.K_4:
                 set_view_mode(VIEW_3D)
+            elif event.key == pygame.K_a:
+                show_angles = not show_angles
+            elif event.key == pygame.K_v:
+                show_vector = not show_vector
+
     
     # Update animation
 # *** FIXED: Changed comparison from function to constant ***
@@ -727,14 +750,18 @@ while running:
     draw_coordinate_planes()
     draw_axes()
 
+    axis_color = YELLOW
+
     # apply current transformation
     if current_step == STEP_0_ORIGINAL:
         display_point, display_p1, display_p2, info = step_0_original(test_point, P1, P2)
     elif current_step == STEP_1_TRANSLATE:
         display_point, display_p1, display_p2, info = step_1_translate(test_point, P1, P2)
     elif current_step == STEP_2_ROTATE_Z:
+        axis_color = PURPLE
         display_point, display_p1, display_p2, info = step_2_rotate_z(test_point, P1, P2)
     elif current_step == STEP_3_ROTATE_Y:
+        axis_color = CYAN
         display_point, display_p1, display_p2, info = step_3_rotate_y(test_point, P1, P2)
     elif current_step == STEP_4_ROTATE_X:
         display_point, display_p1, display_p2, info = step_4_rotate_x(test_point, P1, P2, theta)
@@ -742,7 +769,7 @@ while running:
         display_point, display_p1, display_p2, info = step_5_inverse(test_point, P1, P2, theta)
 
     # Draw rotation axis
-    draw_arbitrary_axis(P1, P2)
+    draw_arbitrary_axis(display_p1, display_p2)
     
     # Draw angle arcs
     if show_angles and info:
