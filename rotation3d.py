@@ -24,6 +24,7 @@ ORANGE = (255, 165, 0)
 LIGHT_BLUE = (173, 216, 230)
 PURPLE = (147, 112, 219)
 PINK = (255, 192, 203)
+PI = math.pi
 
 # Camera parameters
 camera_distance = 10
@@ -48,7 +49,7 @@ STEP_5_INVERSE = 5
 current_step = 0
 
 # Animation
-theta = 0  # Current rotation angle
+theta = PI  # Current rotation angle
 paused = True
 show_angles = True
 show_vector = True #toggle for showing positional vectors
@@ -431,7 +432,7 @@ def step_3_rotate_y(point, p1, p2):
     
     # Calculate beta
     cos_beta = d
-    sin_beta = c
+    sin_beta = -c
     beta = math.atan2(sin_beta, cos_beta)
     info['beta'] = beta
     
@@ -781,8 +782,8 @@ while running:
             beta = info['beta']
             if abs(beta) > 0.01:
                 draw_arc_3d((0, 0, 0), 1.5, 0, beta, (0, 1, 0), PURPLE, 3, 15)
-        elif current_step >= STEP_4_ROTATE_X and theta > 0:
-            draw_arc_3d((0, 0, 0), 1.8, 0, theta, (1, 0, 0), MAGENTA, 3, 20)
+        # elif current_step >= STEP_4_ROTATE_X and theta > 0:
+        #     draw_arc_3d((0, 0, 0), 1.8, 0, theta, (1, 0, 0), MAGENTA, 3, 20)
 
     # Draw cube at point
     draw_cube(display_point, 0.4, CYAN)
