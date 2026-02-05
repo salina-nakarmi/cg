@@ -8,7 +8,7 @@
  [Code](./rotation3d.py)
 
 ### Report
-[Report](./Graphics_Report)
+[Report](./Graphics_Report.pdf)
 
 
 
@@ -19,6 +19,7 @@
 
 ---
 *Submitted to: Dhiraj Shrestha*
+
 
 
 
