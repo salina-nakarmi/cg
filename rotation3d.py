@@ -607,7 +607,7 @@ def draw_step_info():
         lines = [
             f"β = arctan(c/d) = {beta_deg:.1f}°",
             f"cos(β) = d = {info['d']:.3f}",
-            f"sin(β) = c = {info['c']:.3f}",
+            f"sin(β) = -c = -{info['c']:.3f}",
             "",
             "Rotate about Y-axis by -β",
             "Result: Axis aligned with X-axis"
